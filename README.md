@@ -1,6 +1,6 @@
 # Analizador de Expresiones Lógicas
 
-Un analizador de expresiones lógicas que genera tablas de verdad utilizando símbolos lógicos estándar.
+Un analizador completo de expresiones lógicas que genera tablas de verdad utilizando símbolos lógicos estándar y verifica todas las leyes fundamentales del álgebra booleana.
 
 ## Características
 
@@ -8,7 +8,12 @@ Un analizador de expresiones lógicas que genera tablas de verdad utilizando sí
 - ✅ Genera tablas de verdad completas
 - ✅ Manejo de paréntesis para precedencia
 - ✅ Interfaz de línea de comandos
-- ✅ Interfaz web interactiva
+- ✅ **Interfaz web moderna e interactiva**
+- ✅ **Incluye todas las leyes lógicas fundamentales**
+- ✅ **Detecta tautologías y contradicciones automáticamente**
+- ✅ **Estadísticas detalladas de cada análisis**
+- ✅ **Diseño responsive y profesional**
+- ✅ **CSS separado para fácil personalización**
 
 ## Operadores Soportados
 
@@ -119,13 +124,61 @@ V           │V           │V
 ════════════════════════════════════════════════════════════
 ```
 
+## Leyes Lógicas Incluidas
+
+La interfaz web incluye ejemplos interactivos de todas las leyes fundamentales:
+
+### Leyes de De Morgan
+- `¬(A ∨ B) ↔ (¬A ∧ ¬B)`
+- `¬(A ∧ B) ↔ (¬A ∨ ¬B)`
+
+### Leyes de Identidad
+- `A ∧ A ↔ A`
+- `A ∨ A ↔ A`
+
+### Ley de Doble Negación
+- `¬¬A ↔ A`
+
+### Leyes Conmutativas
+- `A ∧ B ↔ B ∧ A`
+- `A ∨ B ↔ B ∨ A`
+
+### Leyes Asociativas
+- `(A ∧ B) ∧ C ↔ A ∧ (B ∧ C)`
+- `(A ∨ B) ∨ C ↔ A ∨ (B ∨ C)`
+
+### Leyes Distributivas
+- `A ∧ (B ∨ C) ↔ (A ∧ B) ∨ (A ∧ C)`
+- `A ∨ (B ∧ C) ↔ (A ∨ B) ∧ (A ∨ C)`
+
+### Leyes de Absorción
+- `A ∧ (A ∨ B) ↔ A`
+- `A ∨ (A ∧ B) ↔ A`
+
+### Leyes de Implicación
+- `A → B ↔ ¬A ∨ B`
+- `A → B ↔ ¬B → ¬A` (Contraposición)
+
+### Leyes del Bicondicional
+- `A ↔ B ↔ (A → B) ∧ (B → A)`
+- `A ↔ B ↔ (A ∧ B) ∨ (¬A ∧ ¬B)`
+
+### Leyes XOR
+- `A ⊕ B ↔ (A ∨ B) ∧ ¬(A ∧ B)`
+- `A ⊕ B ↔ (A ∧ ¬B) ∨ (¬A ∧ B)`
+
+### Tautología y Contradicción
+- `A ∨ ¬A` (Tercero Excluido - Tautología)
+- `A ∧ ¬A` (Contradicción)
+
 ## Estructura del Proyecto
 
 ```
 DigitalI_Project/
-├── logic-expression-analyzer.js   # Analizador principal
-├── index.html                      # Interfaz web interactiva
-└── README.md                       # Documentación
+├── logic-expression-analyzer.js   # Analizador principal (motor del análisis)
+├── index.html                      # Interfaz web interactiva con leyes lógicas
+├── styles.css                      # Estilos CSS separados y modernos
+└── README.md                       # Documentación completa
 ```
 
 ## Algoritmos Utilizados
@@ -135,6 +188,19 @@ DigitalI_Project/
 3. **Evaluación Postfija**: Evalúa la expresión usando una pila
 4. **Generación de combinaciones**: Genera todas las combinaciones posibles de valores de verdad (2^n)
 
+## Interfaz Web Mejorada
+
+La nueva interfaz incluye:
+
+- **Layout de dos columnas**: Entrada a la izquierda, leyes lógicas a la derecha
+- **Panel de operadores**: Botones para insertar símbolos lógicos fácilmente
+- **Biblioteca de leyes**: Más de 20 leyes lógicas organizadas por categorías
+- **Detección automática**: Identifica tautologías y contradicciones
+- **Estadísticas en tiempo real**: Muestra porcentajes y análisis detallado
+- **Diseño responsive**: Se adapta a dispositivos móviles y tablets
+- **Animaciones suaves**: Transiciones y efectos visuales modernos
+- **Scroll suave**: Navegación fluida entre secciones
+
 ## Características Técnicas
 
 - Manejo robusto de errores
@@ -142,6 +208,9 @@ DigitalI_Project/
 - Soporte para paréntesis anidados
 - Precedencia de operadores correcta
 - Símbolos Unicode y ASCII
+- CSS modular y separado
+- JavaScript vanilla (sin dependencias)
+- Código limpio y bien documentado
 
 ## Precedencia de Operadores
 
