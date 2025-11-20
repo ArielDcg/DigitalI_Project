@@ -50,6 +50,16 @@ class LogicExpressionAnalyzer {
             '<=>': { precedence: 1, type: 'binary', eval: (a, b) => a === b, symbol: '↔' },
             'IFF': { precedence: 1, type: 'binary', eval: (a, b) => a === b, symbol: '↔' },
         };
+
+        // Constantes lógicas
+        this.constants = {
+            '⊤': { value: true, symbol: '⊤', name: 'Top (Verdad)' },
+            'TOP': { value: true, symbol: '⊤', name: 'Top (Verdad)' },
+            'T': { value: true, symbol: '⊤', name: 'Top (Verdad)' },
+            '⊥': { value: false, symbol: '⊥', name: 'Bottom (Falsedad)' },
+            'BOTTOM': { value: false, symbol: '⊥', name: 'Bottom (Falsedad)' },
+            'BOT': { value: false, symbol: '⊥', name: 'Bottom (Falsedad)' },
+        };
     }
 
     /**
@@ -93,6 +103,17 @@ class LogicExpressionAnalyzer {
             }
             if (found) continue;
 
+            // Constantes lógicas (⊤, ⊥)
+            if (this.constants[char]) {
+                tokens.push({
+                    type: 'constant',
+                    value: char,
+                    constInfo: this.constants[char]
+                });
+                i++;
+                continue;
+            }
+
             // Variables (letras)
             if (/[A-Za-z]/.test(char)) {
                 let varName = '';
@@ -107,6 +128,13 @@ class LogicExpressionAnalyzer {
                         type: 'operator',
                         value: varName.toUpperCase(),
                         opInfo: this.operators[varName.toUpperCase()]
+                    });
+                } else if (this.constants[varName.toUpperCase()]) {
+                    // Verificar si es una constante (TOP, BOTTOM, T, BOT)
+                    tokens.push({
+                        type: 'constant',
+                        value: varName.toUpperCase(),
+                        constInfo: this.constants[varName.toUpperCase()]
                     });
                 } else {
                     tokens.push({ type: 'variable', value: varName });
@@ -128,7 +156,7 @@ class LogicExpressionAnalyzer {
         const operatorStack = [];
 
         for (const token of tokens) {
-            if (token.type === 'variable') {
+            if (token.type === 'variable' || token.type === 'constant') {
                 output.push(token);
             } else if (token.type === 'operator') {
                 while (
@@ -179,6 +207,9 @@ class LogicExpressionAnalyzer {
                     throw new Error(`Variable '${token.value}' no definida`);
                 }
                 stack.push(values[token.value]);
+            } else if (token.type === 'constant') {
+                // Las constantes siempre tienen el mismo valor
+                stack.push(token.constInfo.value);
             } else if (token.type === 'operator') {
                 if (token.opInfo.type === 'unary') {
                     if (stack.length < 1) {
@@ -244,6 +275,8 @@ class LogicExpressionAnalyzer {
         for (const token of postfix) {
             if (token.type === 'variable') {
                 stack.push(token.value);
+            } else if (token.type === 'constant') {
+                stack.push(token.constInfo.symbol);
             } else if (token.type === 'operator') {
                 if (token.opInfo.type === 'unary') {
                     const a = stack.pop();
@@ -272,6 +305,8 @@ class LogicExpressionAnalyzer {
 
             if (token.type === 'variable') {
                 subexpressionStack.push(token.value);
+            } else if (token.type === 'constant') {
+                subexpressionStack.push(token.constInfo.symbol);
             } else if (token.type === 'operator') {
                 let expr, operands;
 

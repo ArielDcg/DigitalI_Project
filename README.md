@@ -27,6 +27,8 @@ Un analizador completo de expresiones lógicas que genera tablas de verdad utili
 | **XOR** | `⊕`, `XOR` | Disyunción exclusiva |
 | **IMPLIES** | `→`, `=>`, `IMPLIES` | Implicación |
 | **IFF** | `↔`, `<=>`, `IFF` | Bicondicional (si y solo si) |
+| **TOP** | `⊤`, `TOP`, `T` | Constante verdadera (tautología) |
+| **BOTTOM** | `⊥`, `BOTTOM`, `BOT` | Constante falsa (contradicción) |
 
 ## Instalación
 
