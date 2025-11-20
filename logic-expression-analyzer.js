@@ -1,0 +1,386 @@
+/**
+ * Analizador de Expresiones Lógicas
+ * Genera tablas de verdad para expresiones lógicas con operadores estándar
+ *
+ * Operadores soportados:
+ * - ∧, &&, AND: Conjunción (AND)
+ * - ∨, ||, OR: Disyunción (OR)
+ * - ¬, !, NOT: Negación (NOT)
+ * - →, =>, IMPLIES: Implicación
+ * - ↔, <=>, IFF: Bicondicional (si y solo si)
+ * - ⊕, XOR: Disyunción exclusiva
+ *
+ * Ejemplos de uso:
+ * - "A ∧ B"
+ * - "¬A ∨ B"
+ * - "A → B"
+ * - "(A ∨ B) ∧ ¬C"
+ */
+
+class LogicExpressionAnalyzer {
+    constructor() {
+        // Definir operadores y sus símbolos
+        this.operators = {
+            // NOT (negación)
+            '¬': { precedence: 4, type: 'unary', eval: (a) => !a, symbol: '¬' },
+            '!': { precedence: 4, type: 'unary', eval: (a) => !a, symbol: '¬' },
+            'NOT': { precedence: 4, type: 'unary', eval: (a) => !a, symbol: '¬' },
+
+            // AND (conjunción)
+            '∧': { precedence: 3, type: 'binary', eval: (a, b) => a && b, symbol: '∧' },
+            '&&': { precedence: 3, type: 'binary', eval: (a, b) => a && b, symbol: '∧' },
+            'AND': { precedence: 3, type: 'binary', eval: (a, b) => a && b, symbol: '∧' },
+
+            // OR (disyunción)
+            '∨': { precedence: 2, type: 'binary', eval: (a, b) => a || b, symbol: '∨' },
+            '||': { precedence: 2, type: 'binary', eval: (a, b) => a || b, symbol: '∨' },
+            'OR': { precedence: 2, type: 'binary', eval: (a, b) => a || b, symbol: '∨' },
+
+            // XOR (disyunción exclusiva)
+            '⊕': { precedence: 2, type: 'binary', eval: (a, b) => a !== b, symbol: '⊕' },
+            'XOR': { precedence: 2, type: 'binary', eval: (a, b) => a !== b, symbol: '⊕' },
+
+            // IMPLIES (implicación)
+            '→': { precedence: 1, type: 'binary', eval: (a, b) => !a || b, symbol: '→' },
+            '=>': { precedence: 1, type: 'binary', eval: (a, b) => !a || b, symbol: '→' },
+            'IMPLIES': { precedence: 1, type: 'binary', eval: (a, b) => !a || b, symbol: '→' },
+
+            // IFF (bicondicional)
+            '↔': { precedence: 1, type: 'binary', eval: (a, b) => a === b, symbol: '↔' },
+            '<=>': { precedence: 1, type: 'binary', eval: (a, b) => a === b, symbol: '↔' },
+            'IFF': { precedence: 1, type: 'binary', eval: (a, b) => a === b, symbol: '↔' },
+        };
+    }
+
+    /**
+     * Tokeniza la expresión en tokens individuales
+     */
+    tokenize(expression) {
+        const tokens = [];
+        let i = 0;
+        expression = expression.trim();
+
+        while (i < expression.length) {
+            const char = expression[i];
+
+            // Ignorar espacios
+            if (/\s/.test(char)) {
+                i++;
+                continue;
+            }
+
+            // Paréntesis
+            if (char === '(' || char === ')') {
+                tokens.push({ type: char, value: char });
+                i++;
+                continue;
+            }
+
+            // Operadores de múltiples caracteres
+            let found = false;
+            for (let len = 3; len >= 1; len--) {
+                const substr = expression.substr(i, len);
+                if (this.operators[substr]) {
+                    tokens.push({
+                        type: 'operator',
+                        value: substr,
+                        opInfo: this.operators[substr]
+                    });
+                    i += len;
+                    found = true;
+                    break;
+                }
+            }
+            if (found) continue;
+
+            // Variables (letras)
+            if (/[A-Za-z]/.test(char)) {
+                let varName = '';
+                while (i < expression.length && /[A-Za-z0-9]/.test(expression[i])) {
+                    varName += expression[i];
+                    i++;
+                }
+
+                // Verificar si es un operador (AND, OR, NOT, etc.)
+                if (this.operators[varName.toUpperCase()]) {
+                    tokens.push({
+                        type: 'operator',
+                        value: varName.toUpperCase(),
+                        opInfo: this.operators[varName.toUpperCase()]
+                    });
+                } else {
+                    tokens.push({ type: 'variable', value: varName });
+                }
+                continue;
+            }
+
+            throw new Error(`Carácter no reconocido: '${char}' en posición ${i}`);
+        }
+
+        return tokens;
+    }
+
+    /**
+     * Convierte la expresión infija a notación postfija (Shunting Yard Algorithm)
+     */
+    infixToPostfix(tokens) {
+        const output = [];
+        const operatorStack = [];
+
+        for (const token of tokens) {
+            if (token.type === 'variable') {
+                output.push(token);
+            } else if (token.type === 'operator') {
+                while (
+                    operatorStack.length > 0 &&
+                    operatorStack[operatorStack.length - 1].type === 'operator' &&
+                    operatorStack[operatorStack.length - 1].opInfo.precedence >= token.opInfo.precedence &&
+                    token.opInfo.type !== 'unary'
+                ) {
+                    output.push(operatorStack.pop());
+                }
+                operatorStack.push(token);
+            } else if (token.type === '(') {
+                operatorStack.push(token);
+            } else if (token.type === ')') {
+                while (
+                    operatorStack.length > 0 &&
+                    operatorStack[operatorStack.length - 1].type !== '('
+                ) {
+                    output.push(operatorStack.pop());
+                }
+                if (operatorStack.length === 0) {
+                    throw new Error('Paréntesis no balanceados');
+                }
+                operatorStack.pop(); // Remover '('
+            }
+        }
+
+        while (operatorStack.length > 0) {
+            const op = operatorStack.pop();
+            if (op.type === '(') {
+                throw new Error('Paréntesis no balanceados');
+            }
+            output.push(op);
+        }
+
+        return output;
+    }
+
+    /**
+     * Evalúa una expresión en notación postfija con valores específicos
+     */
+    evaluatePostfix(postfix, values) {
+        const stack = [];
+
+        for (const token of postfix) {
+            if (token.type === 'variable') {
+                if (!(token.value in values)) {
+                    throw new Error(`Variable '${token.value}' no definida`);
+                }
+                stack.push(values[token.value]);
+            } else if (token.type === 'operator') {
+                if (token.opInfo.type === 'unary') {
+                    if (stack.length < 1) {
+                        throw new Error('Expresión inválida: operador unario sin operando');
+                    }
+                    const a = stack.pop();
+                    stack.push(token.opInfo.eval(a));
+                } else { // binary
+                    if (stack.length < 2) {
+                        throw new Error('Expresión inválida: operador binario con menos de 2 operandos');
+                    }
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(token.opInfo.eval(a, b));
+                }
+            }
+        }
+
+        if (stack.length !== 1) {
+            throw new Error('Expresión inválida');
+        }
+
+        return stack[0];
+    }
+
+    /**
+     * Extrae todas las variables únicas de la expresión
+     */
+    extractVariables(tokens) {
+        const variables = new Set();
+        for (const token of tokens) {
+            if (token.type === 'variable') {
+                variables.add(token.value);
+            }
+        }
+        return Array.from(variables).sort();
+    }
+
+    /**
+     * Genera todas las combinaciones posibles de valores de verdad
+     */
+    generateTruthCombinations(variables) {
+        const n = variables.length;
+        const combinations = [];
+
+        for (let i = 0; i < Math.pow(2, n); i++) {
+            const combination = {};
+            for (let j = 0; j < n; j++) {
+                combination[variables[j]] = Boolean((i >> (n - 1 - j)) & 1);
+            }
+            combinations.push(combination);
+        }
+
+        return combinations;
+    }
+
+    /**
+     * Convierte la expresión postfija a formato legible con símbolos estándar
+     */
+    postfixToString(postfix) {
+        const stack = [];
+
+        for (const token of postfix) {
+            if (token.type === 'variable') {
+                stack.push(token.value);
+            } else if (token.type === 'operator') {
+                if (token.opInfo.type === 'unary') {
+                    const a = stack.pop();
+                    stack.push(`${token.opInfo.symbol}${a}`);
+                } else {
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    stack.push(`(${a} ${token.opInfo.symbol} ${b})`);
+                }
+            }
+        }
+
+        return stack[0] || '';
+    }
+
+    /**
+     * Genera la tabla de verdad completa
+     */
+    generateTruthTable(expression) {
+        try {
+            // Tokenizar
+            const tokens = this.tokenize(expression);
+
+            // Extraer variables
+            const variables = this.extractVariables(tokens);
+
+            if (variables.length === 0) {
+                throw new Error('No se encontraron variables en la expresión');
+            }
+
+            // Convertir a postfija
+            const postfix = this.infixToPostfix(tokens);
+
+            // Obtener expresión normalizada
+            const normalizedExpression = this.postfixToString(postfix);
+
+            // Generar combinaciones
+            const combinations = this.generateTruthCombinations(variables);
+
+            // Evaluar cada combinación
+            const results = combinations.map(combination => {
+                const result = this.evaluatePostfix(postfix, combination);
+                return { ...combination, result };
+            });
+
+            return {
+                success: true,
+                expression: normalizedExpression,
+                variables,
+                table: results,
+                tokens,
+                postfix
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Formatea la tabla de verdad para impresión
+     */
+    formatTruthTable(truthTable) {
+        if (!truthTable.success) {
+            return `Error: ${truthTable.error}`;
+        }
+
+        const { expression, variables, table } = truthTable;
+
+        let output = '\n';
+        output += '═'.repeat(60) + '\n';
+        output += `Expresión: ${expression}\n`;
+        output += '═'.repeat(60) + '\n\n';
+        output += 'Tabla de Verdad:\n';
+        output += '─'.repeat(60) + '\n';
+
+        // Encabezados
+        const headers = [...variables, 'Resultado'];
+        const colWidth = 12;
+        output += headers.map(h => h.padEnd(colWidth)).join('│') + '\n';
+        output += '─'.repeat(60) + '\n';
+
+        // Filas
+        for (const row of table) {
+            const values = variables.map(v => {
+                const val = row[v] ? 'V' : 'F';
+                return val.padEnd(colWidth);
+            });
+            const result = (row.result ? 'V' : 'F').padEnd(colWidth);
+            output += [...values, result].join('│') + '\n';
+        }
+
+        output += '═'.repeat(60) + '\n';
+
+        return output;
+    }
+}
+
+// Exportar para uso en Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = LogicExpressionAnalyzer;
+}
+
+// Ejemplos de uso
+if (require.main === module) {
+    const analyzer = new LogicExpressionAnalyzer();
+
+    console.log('╔════════════════════════════════════════════════════════════╗');
+    console.log('║   ANALIZADOR DE EXPRESIONES LÓGICAS - TABLAS DE VERDAD    ║');
+    console.log('╚════════════════════════════════════════════════════════════╝');
+
+    // Ejemplos de expresiones
+    const examples = [
+        'A ∧ B',
+        '¬A ∨ B',
+        'A → B',
+        '(A ∨ B) ∧ ¬C',
+        'A ↔ B',
+        'A ⊕ B',
+        '(A ∧ B) → C',
+        '¬(A ∨ B) ↔ (¬A ∧ ¬B)',  // Ley de De Morgan
+    ];
+
+    examples.forEach((expr, index) => {
+        console.log(`\n\n${index + 1}. Analizando: "${expr}"`);
+        const result = analyzer.generateTruthTable(expr);
+        console.log(analyzer.formatTruthTable(result));
+    });
+
+    // Ejemplo interactivo (si se pasa argumento)
+    if (process.argv.length > 2) {
+        const customExpr = process.argv.slice(2).join(' ');
+        console.log(`\n\nExpresión personalizada: "${customExpr}"`);
+        const result = analyzer.generateTruthTable(customExpr);
+        console.log(analyzer.formatTruthTable(result));
+    }
+}

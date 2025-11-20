@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Expresiones Lógicas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .operators-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .operators-panel h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .operator-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .operator-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .operator-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .operator-btn:active {
+            transform: translateY(0);
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-section {
+            margin-top: 30px;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f00;
+            padding: 15px;
+            border-radius: 5px;
+            color: #c00;
+            margin-bottom: 20px;
+        }
+
+        .expression-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .expression-display h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .expression-display .expression {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .truth-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 1.1em;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e9ecef;
+        }
+
+        .true {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .false {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .examples {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .example-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .example-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .example-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .operator-buttons {
+                justify-content: center;
+            }
+
+            .example-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Analizador de Expresiones Lógicas</h1>
+            <p>Genera tablas de verdad con símbolos lógicos estándar</p>
+        </header>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="expression">Ingresa una expresión lógica:</label>
+                    <input type="text" id="expression" placeholder="Ejemplo: A ∧ B, (A ∨ B) → C, ¬A ∧ B">
+                </div>
+
+                <div class="operators-panel">
+                    <h3>🔣 Operadores disponibles (clic para insertar):</h3>
+                    <div class="operator-buttons">
+                        <button class="operator-btn" data-op="¬" title="NOT">¬ (NOT)</button>
+                        <button class="operator-btn" data-op="∧" title="AND">∧ (AND)</button>
+                        <button class="operator-btn" data-op="∨" title="OR">∨ (OR)</button>
+                        <button class="operator-btn" data-op="⊕" title="XOR">⊕ (XOR)</button>
+                        <button class="operator-btn" data-op="→" title="IMPLIES">→ (IMPLIES)</button>
+                        <button class="operator-btn" data-op="↔" title="IFF">↔ (IFF)</button>
+                        <button class="operator-btn" data-op="(" title="Paréntesis">(</button>
+                        <button class="operator-btn" data-op=")" title="Paréntesis">)</button>
+                    </div>
+                </div>
+
+                <button class="analyze-btn" onclick="analyzeExpression()">
+                    🔍 Analizar y Generar Tabla de Verdad
+                </button>
+            </div>
+
+            <div id="result" class="result-section"></div>
+
+            <div class="examples">
+                <h3>📚 Ejemplos (clic para cargar):</h3>
+                <div class="example-list">
+                    <div class="example-item" onclick="loadExample('A ∧ B')">A ∧ B</div>
+                    <div class="example-item" onclick="loadExample('¬A ∨ B')">¬A ∨ B</div>
+                    <div class="example-item" onclick="loadExample('A → B')">A → B</div>
+                    <div class="example-item" onclick="loadExample('(A ∨ B) ∧ ¬C')">(A ∨ B) ∧ ¬C</div>
+                    <div class="example-item" onclick="loadExample('A ↔ B')">A ↔ B</div>
+                    <div class="example-item" onclick="loadExample('A ⊕ B')">A ⊕ B</div>
+                    <div class="example-item" onclick="loadExample('(A ∧ B) → C')">(A ∧ B) → C</div>
+                    <div class="example-item" onclick="loadExample('¬(A ∨ B) ↔ (¬A ∧ ¬B)')">Ley De Morgan</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>💡 Creado con JavaScript - Analizador de Expresiones Lógicas</p>
+        </footer>
+    </div>
+
+    <script src="logic-expression-analyzer.js"></script>
+    <script>
+        const analyzer = new LogicExpressionAnalyzer();
+        const expressionInput = document.getElementById('expression');
+        const resultDiv = document.getElementById('result');
+
+        // Insertar operadores al hacer clic
+        document.querySelectorAll('.operator-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const op = this.getAttribute('data-op');
+                const input = expressionInput;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                const text = input.value;
+
+                input.value = text.substring(0, start) + op + text.substring(end);
+                input.focus();
+                input.setSelectionRange(start + op.length, start + op.length);
+            });
+        });
+
+        // Analizar al presionar Enter
+        expressionInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeExpression();
+            }
+        });
+
+        function loadExample(expression) {
+            expressionInput.value = expression;
+            analyzeExpression();
+        }
+
+        function analyzeExpression() {
+            const expression = expressionInput.value.trim();
+
+            if (!expression) {
+                resultDiv.innerHTML = '<div class="error">⚠️ Por favor ingresa una expresión lógica</div>';
+                return;
+            }
+
+            const result = analyzer.generateTruthTable(expression);
+
+            if (!result.success) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${result.error}</div>`;
+                return;
+            }
+
+            // Mostrar expresión normalizada
+            let html = `
+                <div class="expression-display">
+                    <h3>Expresión normalizada:</h3>
+                    <div class="expression">${result.expression}</div>
+                </div>
+            `;
+
+            // Generar tabla
+            html += '<div class="truth-table"><table>';
+
+            // Encabezados
+            html += '<thead><tr>';
+            result.variables.forEach(v => {
+                html += `<th>${v}</th>`;
+            });
+            html += '<th>Resultado</th></tr></thead>';
+
+            // Filas
+            html += '<tbody>';
+            result.table.forEach(row => {
+                html += '<tr>';
+                result.variables.forEach(v => {
+                    const value = row[v];
+                    const displayValue = value ? 'V' : 'F';
+                    const className = value ? 'true' : 'false';
+                    html += `<td class="${className}">${displayValue}</td>`;
+                });
+                const resultValue = row.result;
+                const displayResult = resultValue ? 'V' : 'F';
+                const resultClass = resultValue ? 'true' : 'false';
+                html += `<td class="${resultClass}">${displayResult}</td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+
+            resultDiv.innerHTML = html;
+        }
+
+        // Analizar ejemplo inicial
+        window.addEventListener('load', function() {
+            loadExample('A ∧ B');
+        });
+    </script>
+</body>
+</html>
