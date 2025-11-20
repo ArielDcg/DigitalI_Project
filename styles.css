@@ -761,3 +761,108 @@ footer p {
     font-weight: bold;
     font-size: 1.1em;
 }
+
+/* Validación FBF */
+.fbf-valid {
+    background: #d1ecf1;
+    border-left: 4px solid var(--info-color);
+    padding: 12px 20px;
+    border-radius: var(--border-radius);
+    color: #0c5460;
+    margin-bottom: 15px;
+    font-weight: 600;
+    animation: fadeIn 0.5s ease;
+}
+
+.fbf-invalid {
+    background: #f8d7da;
+    border-left: 4px solid var(--error-color);
+    padding: 15px 20px;
+    border-radius: var(--border-radius);
+    color: #721c24;
+    margin-bottom: 15px;
+    animation: shake 0.5s ease;
+}
+
+.fbf-invalid strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.fbf-issues {
+    margin: 10px 0 0 20px;
+    list-style-type: disc;
+}
+
+.fbf-issues li {
+    margin: 5px 0;
+    color: #721c24;
+}
+
+/* Autocompletado */
+.autocomplete-info {
+    background: #fff3cd;
+    border-left: 4px solid var(--warning-color);
+    padding: 15px 20px;
+    border-radius: var(--border-radius);
+    color: #856404;
+    margin-bottom: 15px;
+}
+
+.autocomplete-info strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1.05em;
+}
+
+.autocomplete-suggestions {
+    margin: 10px 0 15px 20px;
+    list-style-type: circle;
+}
+
+.autocomplete-suggestions li {
+    margin: 5px 0;
+}
+
+.corrected-expression {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.corrected-expression code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+.apply-btn {
+    background: var(--primary-gradient);
+    color: var(--white);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.apply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.apply-btn:active {
+    transform: translateY(0);
+}

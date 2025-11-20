@@ -270,6 +270,36 @@
                 return;
             }
 
+            // Validación FBF
+            let fbfMessage = '';
+            if (result.fbfValidation) {
+                if (result.fbfValidation.isWellFormed) {
+                    fbfMessage = `<div class="fbf-valid">✓ Fórmula Bien Formada (FBF)</div>`;
+                } else {
+                    fbfMessage = `<div class="fbf-invalid">
+                        <strong>✗ NO es una Fórmula Bien Formada (FBF)</strong>
+                        <ul class="fbf-issues">
+                            ${result.fbfValidation.issues.map(issue => `<li>${issue}</li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+            }
+
+            // Autocompletado
+            let autoCompleteMessage = '';
+            if (result.autoComplete && result.autoComplete.suggestions.length > 0) {
+                autoCompleteMessage = `<div class="autocomplete-info">
+                    <strong>💡 Sugerencias de corrección:</strong>
+                    <ul class="autocomplete-suggestions">
+                        ${result.autoComplete.suggestions.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                    ${result.autoComplete.corrected ? `<div class="corrected-expression">
+                        <strong>Expresión corregida:</strong> <code>${result.autoComplete.corrected}</code>
+                        <button class="apply-btn" onclick="loadExample('${result.autoComplete.corrected.replace(/'/g, "\\'")}')">Aplicar</button>
+                    </div>` : ''}
+                </div>`;
+            }
+
             // Clasificación
             let statusMessage = '';
             if (result.classification.type === 'TAUTOLOGÍA') {
@@ -281,7 +311,7 @@
             }
 
             // Mostrar expresión normalizada
-            let html = statusMessage + `
+            let html = fbfMessage + autoCompleteMessage + statusMessage + `
                 <div class="expression-display">
                     <h3>Expresión normalizada:</h3>
                     <div class="expression">${result.expression}</div>

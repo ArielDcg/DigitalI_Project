@@ -345,12 +345,127 @@ class LogicExpressionAnalyzer {
     }
 
     /**
+     * Valida si la expresión es una Fórmula Bien Formada (FBF)
+     */
+    validateWellFormedFormula(tokens) {
+        const issues = [];
+        let parenthesesCount = 0;
+        let lastToken = null;
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+
+            // Verificar paréntesis balanceados
+            if (token.type === '(') {
+                parenthesesCount++;
+            } else if (token.type === ')') {
+                parenthesesCount--;
+                if (parenthesesCount < 0) {
+                    issues.push('Paréntesis de cierre sin apertura correspondiente');
+                }
+            }
+
+            // Verificar que operadores binarios tengan operandos
+            if (token.type === 'operator' && token.opInfo.type === 'binary') {
+                if (i === 0) {
+                    issues.push(`Operador binario '${token.opInfo.symbol}' al inicio sin operando izquierdo`);
+                }
+                if (i === tokens.length - 1) {
+                    issues.push(`Operador binario '${token.opInfo.symbol}' al final sin operando derecho`);
+                }
+            }
+
+            // Verificar que operadores unarios tengan operando
+            if (token.type === 'operator' && token.opInfo.type === 'unary') {
+                if (i === tokens.length - 1) {
+                    issues.push(`Operador unario '${token.opInfo.symbol}' sin operando`);
+                }
+            }
+
+            // Verificar que no haya dos variables seguidas
+            if (lastToken && lastToken.type === 'variable' && token.type === 'variable') {
+                issues.push(`Variables consecutivas sin operador: '${lastToken.value}' y '${token.value}'`);
+            }
+
+            // Verificar que no haya dos operadores binarios seguidos
+            if (lastToken && lastToken.type === 'operator' && lastToken.opInfo.type === 'binary' &&
+                token.type === 'operator' && token.opInfo.type === 'binary') {
+                issues.push(`Operadores binarios consecutivos: '${lastToken.opInfo.symbol}' y '${token.opInfo.symbol}'`);
+            }
+
+            lastToken = token;
+        }
+
+        if (parenthesesCount > 0) {
+            issues.push(`${parenthesesCount} paréntesis de apertura sin cierre`);
+        }
+
+        const isWellFormed = issues.length === 0;
+
+        return {
+            isWellFormed,
+            issues,
+            message: isWellFormed
+                ? '✓ La expresión es una Fórmula Bien Formada (FBF)'
+                : '✗ La expresión NO es una Fórmula Bien Formada (FBF)'
+        };
+    }
+
+    /**
+     * Intenta completar o corregir una expresión
+     */
+    autoComplete(expression) {
+        const suggestions = [];
+        let corrected = expression.trim();
+
+        // Contar paréntesis
+        const openParens = (corrected.match(/\(/g) || []).length;
+        const closeParens = (corrected.match(/\)/g) || []).length;
+
+        if (openParens > closeParens) {
+            const missing = openParens - closeParens;
+            corrected += ')'.repeat(missing);
+            suggestions.push(`Se agregaron ${missing} paréntesis de cierre`);
+        } else if (closeParens > openParens) {
+            const missing = closeParens - openParens;
+            corrected = '('.repeat(missing) + corrected;
+            suggestions.push(`Se agregaron ${missing} paréntesis de apertura al inicio`);
+        }
+
+        // Detectar operadores al final sin operando
+        const endsWithBinaryOp = /[∧∨⊕→↔]$/.test(corrected.trim());
+        if (endsWithBinaryOp) {
+            corrected += ' ?';
+            suggestions.push('Falta operando derecho (indicado con ?)');
+        }
+
+        // Detectar operadores al inicio sin operando
+        const startsWithBinaryOp = /^[∧∨⊕→↔]/.test(corrected.trim());
+        if (startsWithBinaryOp) {
+            corrected = '? ' + corrected;
+            suggestions.push('Falta operando izquierdo (indicado con ?)');
+        }
+
+        return {
+            original: expression,
+            corrected: corrected !== expression ? corrected : null,
+            suggestions
+        };
+    }
+
+    /**
      * Genera la tabla de verdad completa con pasos
      */
     generateTruthTable(expression) {
         try {
+            // Autocompletar expresión si es necesario
+            const autoComplete = this.autoComplete(expression);
+
             // Tokenizar
             const tokens = this.tokenize(expression);
+
+            // Validar si es FBF
+            const fbfValidation = this.validateWellFormedFormula(tokens);
 
             // Extraer variables
             const variables = this.extractVariables(tokens);
@@ -388,13 +503,19 @@ class LogicExpressionAnalyzer {
                 tokens,
                 postfix,
                 steps,
-                classification
+                classification,
+                fbfValidation,
+                autoComplete
             };
 
         } catch (error) {
+            // Intentar autocompletar incluso si hay error
+            const autoComplete = this.autoComplete(expression);
+
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                autoComplete
             };
         }
     }
