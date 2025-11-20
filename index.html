@@ -257,6 +257,59 @@
             });
         }
 
+        // Función para colapsar/expandir un paso individual
+        function toggleStep(stepIndex) {
+            const stepCard = document.querySelector(`.step-card[data-step="${stepIndex}"]`);
+            if (!stepCard) return;
+
+            const stepBody = stepCard.querySelector('.step-body');
+            const stepToggle = stepCard.querySelector('.step-toggle');
+
+            if (stepBody.classList.contains('step-expanded')) {
+                stepBody.classList.remove('step-expanded');
+                stepBody.classList.add('step-collapsed');
+                stepToggle.textContent = '▶';
+            } else {
+                stepBody.classList.remove('step-collapsed');
+                stepBody.classList.add('step-expanded');
+                stepToggle.textContent = '▼';
+            }
+        }
+
+        // Variable global para rastrear el estado de todos los pasos
+        let allStepsExpanded = true;
+
+        // Función para colapsar/expandir todos los pasos
+        function toggleAllSteps() {
+            const allStepBodies = document.querySelectorAll('.step-body');
+            const allToggles = document.querySelectorAll('.step-toggle');
+            const toggleBtn = document.querySelector('.toggle-all-btn');
+
+            if (allStepsExpanded) {
+                // Colapsar todos
+                allStepBodies.forEach(body => {
+                    body.classList.remove('step-expanded');
+                    body.classList.add('step-collapsed');
+                });
+                allToggles.forEach(toggle => {
+                    toggle.textContent = '▶';
+                });
+                toggleBtn.textContent = '⬆️ Expandir Todos';
+                allStepsExpanded = false;
+            } else {
+                // Expandir todos
+                allStepBodies.forEach(body => {
+                    body.classList.remove('step-collapsed');
+                    body.classList.add('step-expanded');
+                });
+                allToggles.forEach(toggle => {
+                    toggle.textContent = '▼';
+                });
+                toggleBtn.textContent = '⬇️ Contraer Todos';
+                allStepsExpanded = true;
+            }
+        }
+
         function analyzeExpression() {
             const expression = expressionInput.value.trim();
 
@@ -322,16 +375,23 @@
 
             // Mostrar pasos intermedios si hay más de uno
             if (result.steps && result.steps.length > 0) {
-                html += '<div class="steps-section"><h3 class="steps-title">📝 Evaluación Paso a Paso</h3>';
+                html += '<div class="steps-section">';
+                html += '<div class="steps-header">';
+                html += '<h3 class="steps-title">📝 Evaluación Paso a Paso</h3>';
+                html += '<button class="toggle-all-btn" onclick="toggleAllSteps()">⬇️ Contraer Todos</button>';
+                html += '</div>';
 
                 result.steps.forEach((step, index) => {
                     html += `
-                        <div class="step-card">
-                            <div class="step-header">
-                                <span class="step-number">Paso ${step.stepNumber}</span>
-                                <span class="step-expression">${step.expression}</span>
+                        <div class="step-card" data-step="${index}">
+                            <div class="step-header" onclick="toggleStep(${index})">
+                                <div class="step-header-left">
+                                    <span class="step-toggle">▼</span>
+                                    <span class="step-number">Paso ${step.stepNumber}</span>
+                                    <span class="step-expression">${step.expression}</span>
+                                </div>
                             </div>
-                            <div class="step-body">
+                            <div class="step-body step-expanded">
                                 <div class="step-info">
                                     <strong>Operación:</strong> ${step.operator}
                                     <strong>Operandos:</strong> ${step.operands.join(', ')}

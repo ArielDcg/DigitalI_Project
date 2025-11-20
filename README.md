@@ -179,11 +179,25 @@ La interfaz web incluye ejemplos interactivos de todas las leyes fundamentales:
 
 ```
 DigitalI_Project/
-├── logic-expression-analyzer.js   # Analizador principal (motor del análisis)
-├── index.html                      # Interfaz web interactiva con leyes lógicas
-├── styles.css                      # Estilos CSS separados y modernos
-└── README.md                       # Documentación completa
+├── logic-expression-analyzer.js        # Analizador principal (motor del análisis)
+├── index.html                           # Interfaz web interactiva con leyes lógicas
+├── styles.css                           # Estilos CSS separados y modernos
+├── README.md                            # Documentación de usuario
+└── TECHNICAL_DOCUMENTATION.md           # Documentación técnica detallada
 ```
+
+## 📖 Documentación Técnica
+
+Para entender en profundidad cómo funciona el programa, consulta la **[Documentación Técnica Completa](TECHNICAL_DOCUMENTATION.md)** que incluye:
+
+- 🏗️ Arquitectura del sistema
+- 🔄 Flujo de ejecución detallado
+- 📊 Algoritmos implementados (Tokenización, Shunting Yard, Evaluación Postfija)
+- 🧮 Complejidad computacional
+- 🔍 Validación de Fórmulas Bien Formadas (FBF)
+- 💻 Explicación del código paso a paso
+- 📐 Diagramas de flujo y pseudocódigo
+- 🎯 Casos de uso y ejemplos prácticos
 
 ## Algoritmos Utilizados
 

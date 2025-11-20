@@ -381,9 +381,18 @@ class LogicExpressionAnalyzer {
 
     /**
      * Valida si la expresión es una Fórmula Bien Formada (FBF)
+     *
+     * Reglas estrictas de FBF:
+     * 1. Una variable sola es una FBF
+     * 2. Una constante sola (⊤, ⊥) es una FBF
+     * 3. Si φ es una FBF, entonces ¬φ es una FBF
+     * 4. Si φ y ψ son FBF, entonces (φ ∧ ψ), (φ ∨ ψ), (φ → ψ), (φ ↔ ψ), (φ ⊕ ψ) son FBF
+     * 5. Los paréntesis SOLO son obligatorios para operadores binarios
+     * 6. NO se permiten paréntesis innecesarios alrededor de variables, constantes u operadores unarios
      */
     validateWellFormedFormula(tokens) {
         const issues = [];
+        const warnings = [];
         let parenthesesCount = 0;
         let lastToken = null;
 
@@ -393,6 +402,29 @@ class LogicExpressionAnalyzer {
             // Verificar paréntesis balanceados
             if (token.type === '(') {
                 parenthesesCount++;
+
+                // Verificar paréntesis innecesarios: (variable), (constante), o (¬algo)
+                if (i + 1 < tokens.length) {
+                    const nextToken = tokens[i + 1];
+
+                    // Caso 1: (variable) - paréntesis innecesarios
+                    if (nextToken.type === 'variable' && i + 2 < tokens.length && tokens[i + 2].type === ')') {
+                        issues.push(`Paréntesis innecesarios alrededor de la variable '${nextToken.value}'`);
+                    }
+
+                    // Caso 2: (constante) - paréntesis innecesarios
+                    if (nextToken.type === 'constant' && i + 2 < tokens.length && tokens[i + 2].type === ')') {
+                        issues.push(`Paréntesis innecesarios alrededor de la constante '${nextToken.constInfo.symbol}'`);
+                    }
+
+                    // Caso 3: (¬variable) - paréntesis innecesarios alrededor de negación simple
+                    if (nextToken.type === 'operator' && nextToken.opInfo.type === 'unary' &&
+                        i + 2 < tokens.length && (tokens[i + 2].type === 'variable' || tokens[i + 2].type === 'constant') &&
+                        i + 3 < tokens.length && tokens[i + 3].type === ')') {
+                        const operandSymbol = tokens[i + 2].type === 'variable' ? tokens[i + 2].value : tokens[i + 2].constInfo.symbol;
+                        issues.push(`Paréntesis innecesarios: '(${nextToken.opInfo.symbol}${operandSymbol})'. La negación no requiere paréntesis`);
+                    }
+                }
             } else if (token.type === ')') {
                 parenthesesCount--;
                 if (parenthesesCount < 0) {
@@ -408,6 +440,32 @@ class LogicExpressionAnalyzer {
                 if (i === tokens.length - 1) {
                     issues.push(`Operador binario '${token.opInfo.symbol}' al final sin operando derecho`);
                 }
+
+                // Verificar que el operador binario esté dentro de paréntesis (excepto si es la expresión completa)
+                if (tokens.length > 3) {
+                    // Buscar si este operador binario tiene paréntesis que lo rodean
+                    let hasParentheses = false;
+                    let parenDepth = 0;
+                    let foundOperator = false;
+
+                    for (let j = 0; j < tokens.length; j++) {
+                        if (tokens[j].type === '(') parenDepth++;
+                        if (tokens[j].type === ')') parenDepth--;
+                        if (j === i) foundOperator = true;
+                        if (foundOperator && parenDepth === 0) break;
+                    }
+
+                    // Si hay múltiples operadores binarios al mismo nivel, deben estar parentizados
+                    let binaryOpsAtSameLevel = 0;
+                    let depth = 0;
+                    for (let j = 0; j < tokens.length; j++) {
+                        if (tokens[j].type === '(') depth++;
+                        if (tokens[j].type === ')') depth--;
+                        if (depth === 0 && tokens[j].type === 'operator' && tokens[j].opInfo.type === 'binary') {
+                            binaryOpsAtSameLevel++;
+                        }
+                    }
+                }
             }
 
             // Verificar que operadores unarios tengan operando
@@ -415,17 +473,33 @@ class LogicExpressionAnalyzer {
                 if (i === tokens.length - 1) {
                     issues.push(`Operador unario '${token.opInfo.symbol}' sin operando`);
                 }
+
+                // El operando de un unario debe ser variable, constante, u otra expresión entre paréntesis
+                if (i + 1 < tokens.length) {
+                    const nextToken = tokens[i + 1];
+                    if (nextToken.type !== 'variable' && nextToken.type !== 'constant' && nextToken.type !== '(') {
+                        issues.push(`Operador unario '${token.opInfo.symbol}' debe ser seguido por variable, constante o expresión entre paréntesis`);
+                    }
+                }
             }
 
-            // Verificar que no haya dos variables seguidas
-            if (lastToken && lastToken.type === 'variable' && token.type === 'variable') {
-                issues.push(`Variables consecutivas sin operador: '${lastToken.value}' y '${token.value}'`);
+            // Verificar que no haya dos variables/constantes seguidas
+            if (lastToken && (lastToken.type === 'variable' || lastToken.type === 'constant') &&
+                (token.type === 'variable' || token.type === 'constant')) {
+                const last = lastToken.type === 'variable' ? lastToken.value : lastToken.constInfo.symbol;
+                const curr = token.type === 'variable' ? token.value : token.constInfo.symbol;
+                issues.push(`Símbolos consecutivos sin operador: '${last}' y '${curr}'`);
             }
 
             // Verificar que no haya dos operadores binarios seguidos
             if (lastToken && lastToken.type === 'operator' && lastToken.opInfo.type === 'binary' &&
                 token.type === 'operator' && token.opInfo.type === 'binary') {
                 issues.push(`Operadores binarios consecutivos: '${lastToken.opInfo.symbol}' y '${token.opInfo.symbol}'`);
+            }
+
+            // Verificar paréntesis vacío
+            if (lastToken && lastToken.type === '(' && token.type === ')') {
+                issues.push('Paréntesis vacío: ()');
             }
 
             lastToken = token;
@@ -440,6 +514,7 @@ class LogicExpressionAnalyzer {
         return {
             isWellFormed,
             issues,
+            warnings,
             message: isWellFormed
                 ? '✓ La expresión es una Fórmula Bien Formada (FBF)'
                 : '✗ La expresión NO es una Fórmula Bien Formada (FBF)'
