@@ -382,17 +382,20 @@ class LogicExpressionAnalyzer {
     /**
      * Valida si la expresión es una Fórmula Bien Formada (FBF)
      *
-     * Reglas estrictas de FBF:
+     * IMPORTANTE: Separa ERRORES (que invalidan la FBF) de ADVERTENCIAS (sintaxis redundante pero válida)
+     *
+     * Reglas de FBF:
      * 1. Una variable sola es una FBF
      * 2. Una constante sola (⊤, ⊥) es una FBF
      * 3. Si φ es una FBF, entonces ¬φ es una FBF
      * 4. Si φ y ψ son FBF, entonces (φ ∧ ψ), (φ ∨ ψ), (φ → ψ), (φ ↔ ψ), (φ ⊕ ψ) son FBF
-     * 5. Los paréntesis SOLO son obligatorios para operadores binarios
-     * 6. NO se permiten paréntesis innecesarios alrededor de variables, constantes u operadores unarios
+     *
+     * Paréntesis redundantes: Son FBF VÁLIDAS pero con sintaxis innecesaria
+     * Ejemplos: (A), (⊤), (¬p) son válidas pero redundantes
      */
     validateWellFormedFormula(tokens) {
-        const issues = [];
-        const warnings = [];
+        const issues = [];      // Errores críticos que invalidan la FBF
+        const warnings = [];    // Advertencias: sintaxis redundante pero válida
         let parenthesesCount = 0;
         let lastToken = null;
 
@@ -403,26 +406,26 @@ class LogicExpressionAnalyzer {
             if (token.type === '(') {
                 parenthesesCount++;
 
-                // Verificar paréntesis innecesarios: (variable), (constante), o (¬algo)
+                // Detectar paréntesis redundantes (NO son errores, solo advertencias)
                 if (i + 1 < tokens.length) {
                     const nextToken = tokens[i + 1];
 
-                    // Caso 1: (variable) - paréntesis innecesarios
+                    // Caso 1: (variable) - redundante pero válido
                     if (nextToken.type === 'variable' && i + 2 < tokens.length && tokens[i + 2].type === ')') {
-                        issues.push(`Paréntesis innecesarios alrededor de la variable '${nextToken.value}'`);
+                        warnings.push(`Paréntesis redundantes alrededor de '${nextToken.value}' (sintaxis válida pero innecesaria)`);
                     }
 
-                    // Caso 2: (constante) - paréntesis innecesarios
+                    // Caso 2: (constante) - redundante pero válido
                     if (nextToken.type === 'constant' && i + 2 < tokens.length && tokens[i + 2].type === ')') {
-                        issues.push(`Paréntesis innecesarios alrededor de la constante '${nextToken.constInfo.symbol}'`);
+                        warnings.push(`Paréntesis redundantes alrededor de '${nextToken.constInfo.symbol}' (sintaxis válida pero innecesaria)`);
                     }
 
-                    // Caso 3: (¬variable) - paréntesis innecesarios alrededor de negación simple
+                    // Caso 3: (¬átomo) - redundante pero válido
                     if (nextToken.type === 'operator' && nextToken.opInfo.type === 'unary' &&
                         i + 2 < tokens.length && (tokens[i + 2].type === 'variable' || tokens[i + 2].type === 'constant') &&
                         i + 3 < tokens.length && tokens[i + 3].type === ')') {
                         const operandSymbol = tokens[i + 2].type === 'variable' ? tokens[i + 2].value : tokens[i + 2].constInfo.symbol;
-                        issues.push(`Paréntesis innecesarios: '(${nextToken.opInfo.symbol}${operandSymbol})'. La negación no requiere paréntesis`);
+                        warnings.push(`Paréntesis redundantes en '(${nextToken.opInfo.symbol}${operandSymbol})' (sintaxis válida pero innecesaria)`);
                     }
                 }
             } else if (token.type === ')') {
@@ -510,14 +513,23 @@ class LogicExpressionAnalyzer {
         }
 
         const isWellFormed = issues.length === 0;
+        const hasWarnings = warnings.length > 0;
+
+        // Mensaje detallado
+        let message = '';
+        if (isWellFormed && !hasWarnings) {
+            message = '✓ La expresión es una Fórmula Bien Formada (FBF)';
+        } else if (isWellFormed && hasWarnings) {
+            message = '✓ La expresión es una Fórmula Bien Formada (FBF) - Con advertencias de sintaxis redundante';
+        } else {
+            message = '✗ La expresión NO es una Fórmula Bien Formada (FBF) - Contiene errores';
+        }
 
         return {
             isWellFormed,
             issues,
             warnings,
-            message: isWellFormed
-                ? '✓ La expresión es una Fórmula Bien Formada (FBF)'
-                : '✗ La expresión NO es una Fórmula Bien Formada (FBF)'
+            message
         };
     }
 

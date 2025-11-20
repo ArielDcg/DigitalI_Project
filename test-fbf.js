@@ -3,17 +3,24 @@ const LogicExpressionAnalyzer = require('./logic-expression-analyzer');
 const analyzer = new LogicExpressionAnalyzer();
 
 console.log('\n========================================');
-console.log('PRUEBA 1: (¬p) - Paréntesis innecesarios');
+console.log('PRUEBA 1: (¬p) - Paréntesis redundantes');
 console.log('========================================');
 const test1 = analyzer.generateTruthTable('(¬p)');
 console.log('FBF Válida:', test1.fbfValidation.isWellFormed);
 console.log('Mensaje:', test1.fbfValidation.message);
 if (test1.fbfValidation.issues.length > 0) {
-    console.log('Issues:');
+    console.log('Errores:');
     test1.fbfValidation.issues.forEach((issue, i) => {
         console.log(`  ${i + 1}. ${issue}`);
     });
 }
+if (test1.fbfValidation.warnings.length > 0) {
+    console.log('Advertencias:');
+    test1.fbfValidation.warnings.forEach((warning, i) => {
+        console.log(`  ${i + 1}. ${warning}`);
+    });
+}
+console.log('Se evaluó correctamente:', test1.success);
 
 console.log('\n========================================');
 console.log('PRUEBA 2: (A) - Variable con paréntesis');
