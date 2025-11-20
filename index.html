@@ -270,15 +270,14 @@
                 return;
             }
 
-            // Verificar si es tautología o contradicción
-            const allTrue = result.table.every(row => row.result === true);
-            const allFalse = result.table.every(row => row.result === false);
-
+            // Clasificación
             let statusMessage = '';
-            if (allTrue) {
-                statusMessage = '<div class="success">✅ Esta expresión es una TAUTOLOGÍA (siempre verdadera)</div>';
-            } else if (allFalse) {
-                statusMessage = '<div class="error">⛔ Esta expresión es una CONTRADICCIÓN (siempre falsa)</div>';
+            if (result.classification.type === 'TAUTOLOGÍA') {
+                statusMessage = `<div class="success">✅ ${result.classification.type}: ${result.classification.description}</div>`;
+            } else if (result.classification.type === 'CONTRADICCIÓN') {
+                statusMessage = `<div class="error">⛔ ${result.classification.type}: ${result.classification.description}</div>`;
+            } else {
+                statusMessage = `<div class="contingency">⚖️ ${result.classification.type}: ${result.classification.description}</div>`;
             }
 
             // Mostrar expresión normalizada
@@ -289,7 +288,56 @@
                 </div>
             `;
 
-            // Generar tabla
+            // Mostrar pasos intermedios si hay más de uno
+            if (result.steps && result.steps.length > 0) {
+                html += '<div class="steps-section"><h3 class="steps-title">📝 Evaluación Paso a Paso</h3>';
+
+                result.steps.forEach((step, index) => {
+                    html += `
+                        <div class="step-card">
+                            <div class="step-header">
+                                <span class="step-number">Paso ${step.stepNumber}</span>
+                                <span class="step-expression">${step.expression}</span>
+                            </div>
+                            <div class="step-body">
+                                <div class="step-info">
+                                    <strong>Operación:</strong> ${step.operator}
+                                    <strong>Operandos:</strong> ${step.operands.join(', ')}
+                                </div>
+                                <div class="step-table">
+                                    <table>
+                                        <thead><tr>`;
+
+                    // Encabezados
+                    result.variables.forEach(v => {
+                        html += `<th>${v}</th>`;
+                    });
+                    html += `<th>${step.expression}</th></tr></thead><tbody>`;
+
+                    // Filas
+                    step.results.forEach(row => {
+                        html += '<tr>';
+                        result.variables.forEach(v => {
+                            const value = row[v];
+                            const displayValue = value ? 'V' : 'F';
+                            const className = value ? 'true' : 'false';
+                            html += `<td class="${className}">${displayValue}</td>`;
+                        });
+                        const resultValue = row.result;
+                        const displayResult = resultValue ? 'V' : 'F';
+                        const resultClass = resultValue ? 'true' : 'false';
+                        html += `<td class="${resultClass}"><strong>${displayResult}</strong></td>`;
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table></div></div></div>';
+                });
+
+                html += '</div>';
+            }
+
+            // Tabla final
+            html += '<div class="final-table-section"><h3 class="final-title">📊 Tabla de Verdad Final</h3>';
             html += '<div class="truth-table"><table>';
 
             // Encabezados
@@ -297,7 +345,7 @@
             result.variables.forEach(v => {
                 html += `<th>${v}</th>`;
             });
-            html += '<th>Resultado</th></tr></thead>';
+            html += '<th>Resultado Final</th></tr></thead>';
 
             // Filas
             html += '<tbody>';
@@ -315,19 +363,21 @@
                 html += `<td class="${resultClass}"><strong>${displayResult}</strong></td>`;
                 html += '</tr>';
             });
-            html += '</tbody></table></div>';
+            html += '</tbody></table></div></div>';
 
             // Estadísticas
             const trueCount = result.table.filter(row => row.result === true).length;
             const totalRows = result.table.length;
             html += `
                 <div class="card">
-                    <div class="card-header">📊 Estadísticas</div>
+                    <div class="card-header">📈 Análisis Estadístico</div>
                     <div class="card-body">
+                        <p><strong>Clasificación:</strong> <span class="classification-${result.classification.type.toLowerCase()}">${result.classification.type}</span></p>
                         <p><strong>Total de combinaciones:</strong> ${totalRows}</p>
                         <p><strong>Resultados verdaderos:</strong> ${trueCount} (${((trueCount/totalRows)*100).toFixed(1)}%)</p>
                         <p><strong>Resultados falsos:</strong> ${totalRows - trueCount} (${(((totalRows-trueCount)/totalRows)*100).toFixed(1)}%)</p>
                         <p><strong>Variables:</strong> ${result.variables.join(', ')}</p>
+                        <p><strong>Número de pasos:</strong> ${result.steps.length}</p>
                     </div>
                 </div>
             `;

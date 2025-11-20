@@ -6,11 +6,13 @@ Un analizador completo de expresiones lógicas que genera tablas de verdad utili
 
 - ✅ Soporta múltiples símbolos para cada operador lógico
 - ✅ Genera tablas de verdad completas
+- ✅ **Evaluación paso a paso de cada subexpresión**
+- ✅ **Muestra tablas intermedias para cada paso**
 - ✅ Manejo de paréntesis para precedencia
 - ✅ Interfaz de línea de comandos
 - ✅ **Interfaz web moderna e interactiva**
-- ✅ **Incluye todas las leyes lógicas fundamentales**
-- ✅ **Detecta tautologías y contradicciones automáticamente**
+- ✅ **Incluye todas las leyes lógicas fundamentales (más de 20)**
+- ✅ **Clasificación automática: TAUTOLOGÍA, CONTRADICCIÓN o CONTINGENCIA**
 - ✅ **Estadísticas detalladas de cada análisis**
 - ✅ **Diseño responsive y profesional**
 - ✅ **CSS separado para fácil personalización**
@@ -188,6 +190,67 @@ DigitalI_Project/
 3. **Evaluación Postfija**: Evalúa la expresión usando una pila
 4. **Generación de combinaciones**: Genera todas las combinaciones posibles de valores de verdad (2^n)
 
+## Evaluación Paso a Paso
+
+El analizador muestra la evaluación completa de la expresión, paso por paso:
+
+### Ejemplo: `¬(A ∧ B) ↔ (¬A ∨ ¬B)` (Ley de De Morgan)
+
+```
+Paso 1: (A ∧ B)
+├─ Operación: ∧
+├─ Operandos: A, B
+└─ Tabla de verdad del paso 1
+
+Paso 2: ¬(A ∧ B)
+├─ Operación: ¬
+├─ Operandos: (A ∧ B)
+└─ Tabla de verdad del paso 2
+
+Paso 3: ¬A
+├─ Operación: ¬
+├─ Operandos: A
+└─ Tabla de verdad del paso 3
+
+Paso 4: ¬B
+├─ Operación: ¬
+├─ Operandos: B
+└─ Tabla de verdad del paso 4
+
+Paso 5: (¬A ∨ ¬B)
+├─ Operación: ∨
+├─ Operandos: ¬A, ¬B
+└─ Tabla de verdad del paso 5
+
+Paso 6: (¬(A ∧ B) ↔ (¬A ∨ ¬B))
+├─ Operación: ↔
+├─ Operandos: ¬(A ∧ B), (¬A ∨ ¬B)
+└─ Tabla de verdad final
+
+Clasificación: TAUTOLOGÍA ✅
+```
+
+## Clasificación de Expresiones
+
+El analizador clasifica automáticamente cada expresión en una de tres categorías:
+
+### 🟢 TAUTOLOGÍA
+Expresiones que son **siempre verdaderas**, sin importar los valores de las variables.
+- Ejemplo: `A ∨ ¬A` (Ley del tercero excluido)
+- Ejemplo: `¬(A ∨ B) ↔ (¬A ∧ ¬B)` (Ley de De Morgan)
+- En la tabla de verdad: **Todas las filas son V**
+
+### 🔴 CONTRADICCIÓN
+Expresiones que son **siempre falsas**, sin importar los valores de las variables.
+- Ejemplo: `A ∧ ¬A` (Contradicción)
+- En la tabla de verdad: **Todas las filas son F**
+
+### 🟡 CONTINGENCIA
+Expresiones que son **verdaderas en algunos casos y falsas en otros**.
+- Ejemplo: `A ∨ B`
+- Ejemplo: `(A ∧ B) → C`
+- En la tabla de verdad: **Algunas filas son V y otras son F**
+
 ## Interfaz Web Mejorada
 
 La nueva interfaz incluye:
@@ -195,7 +258,8 @@ La nueva interfaz incluye:
 - **Layout de dos columnas**: Entrada a la izquierda, leyes lógicas a la derecha
 - **Panel de operadores**: Botones para insertar símbolos lógicos fácilmente
 - **Biblioteca de leyes**: Más de 20 leyes lógicas organizadas por categorías
-- **Detección automática**: Identifica tautologías y contradicciones
+- **Evaluación paso a paso**: Muestra cada subexpresión con su tabla de verdad
+- **Clasificación automática**: Identifica TAUTOLOGÍAS, CONTRADICCIONES y CONTINGENCIAS
 - **Estadísticas en tiempo real**: Muestra porcentajes y análisis detallado
 - **Diseño responsive**: Se adapta a dispositivos móviles y tablets
 - **Animaciones suaves**: Transiciones y efectos visuales modernos

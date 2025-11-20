@@ -260,7 +260,92 @@ class LogicExpressionAnalyzer {
     }
 
     /**
-     * Genera la tabla de verdad completa
+     * Evalúa paso a paso mostrando cada subexpresión
+     */
+    evaluateStepByStep(postfix, combinations) {
+        const steps = [];
+        const subexpressionStack = [];
+
+        // Evaluar cada token en la expresión postfija
+        for (let stepIndex = 0; stepIndex < postfix.length; stepIndex++) {
+            const token = postfix[stepIndex];
+
+            if (token.type === 'variable') {
+                subexpressionStack.push(token.value);
+            } else if (token.type === 'operator') {
+                let expr, operands;
+
+                if (token.opInfo.type === 'unary') {
+                    const a = subexpressionStack.pop();
+                    expr = `${token.opInfo.symbol}${a}`;
+                    operands = [a];
+                    subexpressionStack.push(expr);
+                } else { // binary
+                    const b = subexpressionStack.pop();
+                    const a = subexpressionStack.pop();
+                    expr = `(${a} ${token.opInfo.symbol} ${b})`;
+                    operands = [a, b];
+                    subexpressionStack.push(expr);
+                }
+
+                // Crear paso con evaluación
+                const stepData = {
+                    stepNumber: steps.length + 1,
+                    expression: expr,
+                    operator: token.opInfo.symbol,
+                    operands: operands,
+                    results: []
+                };
+
+                // Evaluar esta subexpresión para cada combinación
+                const subPostfix = postfix.slice(0, stepIndex + 1);
+                for (const combination of combinations) {
+                    try {
+                        const result = this.evaluatePostfix(subPostfix, combination);
+                        stepData.results.push({
+                            ...combination,
+                            result
+                        });
+                    } catch (error) {
+                        // Si hay error, simplemente saltamos este paso
+                        continue;
+                    }
+                }
+
+                steps.push(stepData);
+            }
+        }
+
+        return steps;
+    }
+
+    /**
+     * Clasifica la expresión como tautología, contingencia o contradicción
+     */
+    classifyExpression(results) {
+        const allTrue = results.every(row => row.result === true);
+        const allFalse = results.every(row => row.result === false);
+
+        if (allTrue) {
+            return {
+                type: 'TAUTOLOGÍA',
+                description: 'La expresión es siempre verdadera para cualquier combinación de valores'
+            };
+        } else if (allFalse) {
+            return {
+                type: 'CONTRADICCIÓN',
+                description: 'La expresión es siempre falsa para cualquier combinación de valores'
+            };
+        } else {
+            return {
+                type: 'CONTINGENCIA',
+                description: 'La expresión es verdadera en algunos casos y falsa en otros'
+            };
+        }
+    }
+
+    /**
+     * Genera la tabla de verdad completa con pasos
      */
     generateTruthTable(expression) {
         try {
@@ -289,13 +374,21 @@ class LogicExpressionAnalyzer {
                 return { ...combination, result };
             });
 
+            // Generar evaluación paso a paso
+            const steps = this.evaluateStepByStep(postfix, combinations);
+
+            // Clasificar la expresión
+            const classification = this.classifyExpression(results);
+
             return {
                 success: true,
                 expression: normalizedExpression,
                 variables,
                 table: results,
                 tokens,
-                postfix
+                postfix,
+                steps,
+                classification
             };
 
         } catch (error) {
